@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 class AssetsProvider extends InheritedWidget{
   AssetsProvider({Key key,Widget child}):super(key: key,child: child);
 
-  final Image logo = Image.asset('assets/logo.png');
+  final Color backgroundColor = Color(0xff6C179D);
+
+  final Image logo = Image.asset('assets/logo.png',);
+  final Image menu = Image.asset('assets/menu.png',fit: BoxFit.cover,);
 
 
   static AssetsProvider of(BuildContext context){

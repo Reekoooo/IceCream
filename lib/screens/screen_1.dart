@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ice_cream/assets/assets_provider.dart';
+import 'package:flutter_ice_cream/routes_transitions/disolve_route.dart';
+
+import 'home_screen.dart';
 
 const String _display = 'Welcome';
 const String _body =
@@ -53,7 +56,11 @@ class Screen1 extends StatelessWidget {
             RaisedButton(
               color: _buttonColor,
               child: Text(_buttonText,style: newTextTheme.body1.copyWith(fontWeight: FontWeight.bold),),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).push(DissolveRoute(
+                  page: HomeScreen(),
+                ));
+              },
             ),
           ],
         ),
