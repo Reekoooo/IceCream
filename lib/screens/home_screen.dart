@@ -45,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _animationController.dispose();
+    _menuLeavingController.dispose();
     super.dispose();
   }
 
