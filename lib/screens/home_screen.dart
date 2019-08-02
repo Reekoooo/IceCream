@@ -65,6 +65,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 padding: const EdgeInsets.only(top: 150.0),
                 child: _isButtonVisible
                     ? RaisedButton(
+                        color: AssetsProvider.of(context).backgroundColor,
+                        textColor: Colors.white70,
                         child: Text("Click 3 times"),
                         onPressed: _rotateToNext,
                       )
@@ -104,7 +106,8 @@ class MenuWheel extends StatelessWidget {
       @required Animation<double> rotationAnimation,
       @required this.controller})
       : _incrementalRotationAnimation = rotationAnimation,
-        _menuTranslationAnimation = Tween<double>(begin: screenSize.height / 2, end: 0.0).animate(
+        _menuTranslationAnimation =
+            Tween<double>(begin: screenSize.height / 2, end: 0.0).animate(
           CurvedAnimation(
             parent: controller,
             curve: Interval(0.0, 0.1, curve: Curves.ease),
@@ -136,6 +139,9 @@ class MenuWheel extends StatelessWidget {
             CurvedAnimation(
                 parent: controller,
                 curve: Interval(0.75, 1.0, curve: Curves.easeIn))),
+        _flareSlideLeftAnimation = Tween(begin: screenSize.width, end: 0.0)
+            .animate(
+                CurvedAnimation(parent: controller, curve: Interval(0.7, 0.8,curve: Curves.bounceOut))),
         super(key: key);
 
   final Animation<double> controller;
@@ -147,6 +153,7 @@ class MenuWheel extends StatelessWidget {
   final Animation<double> _circularReveal;
   final Animation<double> _circleFadeInAnimation;
   final Animation<double> _textOpacityAnimation;
+  final Animation<double> _flareSlideLeftAnimation;
 
   final Animation<double> _menuTranslationAnimation;
 
@@ -154,6 +161,7 @@ class MenuWheel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
+
         Center(
           child: Opacity(
             opacity: _circleFadeInAnimation.value,
@@ -168,11 +176,24 @@ class MenuWheel extends StatelessWidget {
             ),
           ),
         ),
+        Transform.translate(
+          offset: Offset(_flareSlideLeftAnimation.value, 0.0),
+          child: Opacity(
+            opacity: 1.0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Expanded(child: AssetsProvider.of(context).flare1),
+                Expanded(child: AssetsProvider.of(context).flare2),
+              ],
+            ),
+          ),
+        ),
         Opacity(
           opacity: _textOpacityAnimation.value,
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.only(left:16.0),
+              padding: const EdgeInsets.only(left: 16.0),
               child: Text(
                 "You are Awesome ..! ",
                 style: TextStyle(fontSize: 50, color: Colors.white54),

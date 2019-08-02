@@ -7,6 +7,8 @@ class AssetsProvider extends InheritedWidget{
 
   final Image logo = Image.asset('assets/logo.png',);
   final Image menu = Image.asset('assets/menu.png',fit: BoxFit.cover,);
+  final Image flare1 = Image.asset('assets/flare1.png',fit: BoxFit.cover,);
+  final Image flare2 = Image.asset('assets/flare2.png',fit: BoxFit.cover,);
 
 
   static AssetsProvider of(BuildContext context){
