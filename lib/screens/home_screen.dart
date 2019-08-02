@@ -102,7 +102,7 @@ class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
 //            setState(() {});
           });
 
-    controller = _menuLeavingController;
+    //controller = _menuLeavingController;
 
     _incrementalRotationAnimation =Tween<double>(begin: _currentRotation,end: _currentRotation+_incrementalRotation).animate(
 
@@ -111,7 +111,7 @@ class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
     _rotationAnimation =
         Tween<double>(begin: 3.14 / 4, end: 3.14 * 8 + 3.14 / 4).animate(
       CurvedAnimation(
-          parent: controller, curve: Interval(0.4, 0.6, curve: Curves.linear))
+          parent: _menuLeavingController, curve: Interval(0.4, 0.6, curve: Curves.linear))
         ..addListener(() {}),
     );
 
@@ -119,7 +119,7 @@ class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
     _menuTranslationAnimation =
         Tween<double>(begin: screenSize.height / 2, end: 0.0).animate(
       CurvedAnimation(
-        parent: controller,
+        parent: _menuLeavingController,
         curve: Interval(0.0, 0.1, curve: Curves.ease),
       ),
     )..addListener(() {
@@ -127,37 +127,37 @@ class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
           });
     _scaleDownAnimation = Tween<double>(begin: 1.5, end: 1.0).animate(
       CurvedAnimation(
-          parent: controller,
+          parent: _menuLeavingController,
           curve: Interval(0.2, 0.3, curve: Curves.decelerate)),
     )..addListener(() {
         setState(() {});
       });
 
     _menuFadeOutAnimation = Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
-        parent: controller, curve: Interval(0.6, 0.7, curve: Curves.easeIn)))
+        parent: _menuLeavingController, curve: Interval(0.6, 0.7, curve: Curves.easeIn)))
       ..addListener(() {
         setState(() {});
       });
     _circularReveal = Tween<double>(begin: 0.0, end: screenSize.height).animate(
-        CurvedAnimation(parent: controller, curve: Interval(0.65, 0.7)))
+        CurvedAnimation(parent: _menuLeavingController, curve: Interval(0.65, 0.7)))
       ..addListener(() {
         setState(() {});
       });
     _circleFadeInAnimation = Tween(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(
-            parent: controller,
+            parent: _menuLeavingController,
             curve: Interval(0.65, 0.7, curve: Curves.easeIn)))
       ..addListener(() {
         setState(() {});
       });
     _textOpacityAnimation = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-        parent: controller, curve: Interval(0.75, 1.0, curve: Curves.easeIn)))
+        parent: _menuLeavingController, curve: Interval(0.75, 1.0, curve: Curves.easeIn)))
       ..addListener(() {
         setState(() {});
       });
     _flareSlideLeftAnimation = Tween(begin: screenSize.width, end: 0.0).animate(
         CurvedAnimation(
-            parent: controller,
+            parent: _menuLeavingController,
             curve: Interval(0.7, 0.8, curve: Curves.bounceOut)))
       ..addListener(() {
         setState(() {});
@@ -166,6 +166,7 @@ class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _animationController.dispose();
     _menuLeavingController.dispose();
     super.dispose();
   }
@@ -190,11 +191,11 @@ class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
           ),
         ),
         FlareAnimation(
-          controller: controller,
+          controller: _menuLeavingController,
           screenSize: screenSize,
         ),
         IceCreamAnimation(
-          controller: controller,
+          controller: _menuLeavingController,
           screenSize: screenSize,
         ),
         Opacity(
