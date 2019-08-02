@@ -10,48 +10,20 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Size screenSize;
-  bool _isButtonVisible = true;
 
-  AnimationController _animationController;
-  AnimationController _menuLeavingController;
-  Animation<double> _rotationAnimation;
-  double _currentRotation = 0.0;
-  static const double _incrementalRotation = -0.25;
 
   @override
   void initState() {
     super.initState();
-      SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown
-    ]);
+    SystemChrome.setPreferredOrientations(
+        [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
 
-    _animationController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 200),
-    );
-    _menuLeavingController =
-        AnimationController(vsync: this, duration: Duration(seconds: 5))
-          ..addListener(() {
-            print(_menuLeavingController.value);
-            setState(() {});
-          });
 
-    _rotationAnimation = Tween(begin: 0.0, end: 0.25).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.decelerate),
-    )..addListener(() {
-        if (_rotationAnimation.value == -0.75) {
-          print("1 Rotation finished");
-          _isButtonVisible = false;
-          _menuLeavingController.forward();
-        }
-      });
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
-    _menuLeavingController.dispose();
+
     super.dispose();
   }
 
@@ -65,70 +37,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         children: <Widget>[
           new MenuWheel(
             screenSize: screenSize,
-            rotationAnimation: _rotationAnimation,
-            controller: _menuLeavingController,
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(top: 150.0),
-                child: _isButtonVisible
-                    ? RaisedButton(
-                        color: AssetsProvider.of(context).backgroundColor,
-                        textColor: Colors.white70,
-                        child: Text("Click 3 times"),
-                        onPressed: _rotateToNext,
-                      )
-                    : Container(),
-              ),
-            ],
           ),
         ],
       ),
     );
   }
-
-  void _rotateToNext() {
-    final double _endRotation = _currentRotation + _incrementalRotation;
-    setState(() {
-      _rotationAnimation =
-          Tween(begin: _currentRotation, end: _endRotation).animate(
-        CurvedAnimation(parent: _animationController, curve: Curves.decelerate),
-      );
-    });
-
-    _currentRotation = _endRotation;
-    print(_currentRotation);
-    _animationController.forward(from: 0.0);
-  }
 }
 
 class MenuWheel extends StatefulWidget {
   final Size screenSize;
-  final Animation<double> controller;
-  final Animation<double> rotationAnimation;
+
 
   MenuWheel(
       {Key key,
       @required this.screenSize,
-      @required Animation<double> rotationAnimation,
-      @required this.controller})
-      : rotationAnimation =
-            Tween<double>(begin: 3.14 / 4, end: 3.14 * 8 + 3.14 / 4).animate(
-          CurvedAnimation(
-              parent: controller,
-              curve: Interval(0.4, 0.6, curve: Curves.linear)),
-        ),
-        super(key: key);
+      })
+      : super(key: key);
 
   @override
   _MenuWheelState createState() => _MenuWheelState();
 }
 
-class _MenuWheelState extends State<MenuWheel> {
-
+class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
   Animation<double> _incrementalRotationAnimation;
   Animation<double> _scaleDownAnimation;
 
@@ -137,6 +67,13 @@ class _MenuWheelState extends State<MenuWheel> {
   Animation<double> _circleFadeInAnimation;
   Animation<double> _textOpacityAnimation;
   Animation<double> _flareSlideLeftAnimation;
+
+  AnimationController _menuLeavingController;
+  AnimationController _animationController;
+  Animation<double> _rotationAnimation;
+  double _currentRotation = 0.0;
+  bool _isButtonVisible = true;
+  static const double _incrementalRotation = -0.25;
 
   Animation<double> _menuTranslationAnimation;
   Size screenSize;
@@ -148,41 +85,89 @@ class _MenuWheelState extends State<MenuWheel> {
     super.initState();
 
 
+    _animationController = AnimationController(vsync: this,duration: Duration(milliseconds: 200))..addListener((){
+      print(_animationController.value);
+      if (_currentRotation == -0.75) {
+        print("1 Rotation finished");
+        _isButtonVisible = false;
+        _menuLeavingController.forward();
+      }
+    });
 
     screenSize = widget.screenSize;
-    controller = widget.controller;
+    _menuLeavingController =
+        AnimationController(vsync: this, duration: Duration(seconds: 5))
+          ..addListener(() {
+            print(_menuLeavingController.value);
+//            setState(() {});
+          });
+
+    controller = _menuLeavingController;
+
+    _incrementalRotationAnimation =Tween<double>(begin: _currentRotation,end: _currentRotation+_incrementalRotation).animate(
+
+    CurvedAnimation(parent: _animationController, curve: Curves.decelerate));
+
+    _rotationAnimation =
+        Tween<double>(begin: 3.14 / 4, end: 3.14 * 8 + 3.14 / 4).animate(
+      CurvedAnimation(
+          parent: controller, curve: Interval(0.4, 0.6, curve: Curves.linear))
+        ..addListener(() {}),
+    );
 
 
-
-    _incrementalRotationAnimation = widget.rotationAnimation;
     _menuTranslationAnimation =
         Tween<double>(begin: screenSize.height / 2, end: 0.0).animate(
       CurvedAnimation(
         parent: controller,
         curve: Interval(0.0, 0.1, curve: Curves.ease),
       ),
-    );
+    )..addListener(() {
+            setState(() {});
+          });
     _scaleDownAnimation = Tween<double>(begin: 1.5, end: 1.0).animate(
       CurvedAnimation(
           parent: controller,
           curve: Interval(0.2, 0.3, curve: Curves.decelerate)),
-    );
+    )..addListener(() {
+        setState(() {});
+      });
 
     _menuFadeOutAnimation = Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
-        parent: controller, curve: Interval(0.6, 0.7, curve: Curves.easeIn)));
+        parent: controller, curve: Interval(0.6, 0.7, curve: Curves.easeIn)))
+      ..addListener(() {
+        setState(() {});
+      });
     _circularReveal = Tween<double>(begin: 0.0, end: screenSize.height).animate(
-        CurvedAnimation(parent: controller, curve: Interval(0.65, 0.7)));
+        CurvedAnimation(parent: controller, curve: Interval(0.65, 0.7)))
+      ..addListener(() {
+        setState(() {});
+      });
     _circleFadeInAnimation = Tween(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(
             parent: controller,
-            curve: Interval(0.65, 0.7, curve: Curves.easeIn)));
+            curve: Interval(0.65, 0.7, curve: Curves.easeIn)))
+      ..addListener(() {
+        setState(() {});
+      });
     _textOpacityAnimation = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-        parent: controller, curve: Interval(0.75, 1.0, curve: Curves.easeIn)));
+        parent: controller, curve: Interval(0.75, 1.0, curve: Curves.easeIn)))
+      ..addListener(() {
+        setState(() {});
+      });
     _flareSlideLeftAnimation = Tween(begin: screenSize.width, end: 0.0).animate(
         CurvedAnimation(
             parent: controller,
-            curve: Interval(0.7, 0.8, curve: Curves.bounceOut)));
+            curve: Interval(0.7, 0.8, curve: Curves.bounceOut)))
+      ..addListener(() {
+        setState(() {});
+      });
+  }
 
+  @override
+  void dispose() {
+    _menuLeavingController.dispose();
+    super.dispose();
   }
 
   @override
@@ -205,14 +190,12 @@ class _MenuWheelState extends State<MenuWheel> {
           ),
         ),
         FlareAnimation(
-            controller: controller,
+          controller: controller,
           screenSize: screenSize,
         ),
-
         IceCreamAnimation(
           controller: controller,
           screenSize: screenSize,
-
         ),
         Opacity(
           opacity: _textOpacityAnimation.value,
@@ -231,7 +214,7 @@ class _MenuWheelState extends State<MenuWheel> {
           child: Transform.translate(
             offset: Offset(0.0, _menuTranslationAnimation.value),
             child: Transform.rotate(
-              angle: widget.rotationAnimation.value,
+              angle: _rotationAnimation.value,
               alignment: FractionalOffset.center,
               child: Transform.scale(
                 scale: _scaleDownAnimation.value,
@@ -245,25 +228,55 @@ class _MenuWheelState extends State<MenuWheel> {
             ),
           ),
         ),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.only(top: 150.0),
+              child: _isButtonVisible
+                  ? RaisedButton(
+                      color: AssetsProvider.of(context).backgroundColor,
+                      textColor: Colors.white70,
+                      child: Text("Click 3 times"),
+                      onPressed: _rotateToNext,
+                    )
+                  : Container(),
+            ),
+          ],
+        ),
       ],
     );
   }
 
+  void _rotateToNext() {
+    final double _endRotation = _currentRotation + _incrementalRotation;
+    setState(() {
+      _incrementalRotationAnimation =
+          Tween(begin: _currentRotation, end: _endRotation).animate(
+        CurvedAnimation(parent: _animationController, curve: Curves.decelerate)
+          ..addListener(() {
+            setState(() {});
+          }),
+      );
+    });
 
+    _currentRotation = _endRotation;
+    print(_currentRotation);
+    _animationController.forward(from: 0.0);
+  }
 }
 
 class FlareAnimation extends StatefulWidget {
-   FlareAnimation({
+  FlareAnimation({
     Key key,
     @required this.controller,
     @required this.screenSize,
-  })  :
-      //flareSlideLeftAnimation,
+  }) :
+        //flareSlideLeftAnimation,
         super(key: key);
-   final Animation<double> controller;
-   final Size screenSize;
-
-
+  final Animation<double> controller;
+  final Size screenSize;
 
   @override
   _FlareAnimationState createState() => _FlareAnimationState();
@@ -271,15 +284,19 @@ class FlareAnimation extends StatefulWidget {
 
 class _FlareAnimationState extends State<FlareAnimation> {
   Animation<double> _flareSlideLeftAnimation;
+
   @override
   void initState() {
-
     super.initState();
-    _flareSlideLeftAnimation = Tween(begin: widget.screenSize.width, end: 0.0).animate(
-        CurvedAnimation(
+    _flareSlideLeftAnimation = Tween(begin: widget.screenSize.width, end: 0.0)
+        .animate(CurvedAnimation(
             parent: widget.controller,
-            curve: Interval(0.7, 0.8, curve: Curves.bounceOut)));
+            curve: Interval(0.7, 0.8, curve: Curves.bounceOut)))
+          ..addListener(() {
+            setState(() {});
+          });
   }
+
   @override
   Widget build(BuildContext context) {
     return Transform.translate(
@@ -299,28 +316,21 @@ class _FlareAnimationState extends State<FlareAnimation> {
 }
 
 class IceCreamAnimation extends StatefulWidget {
-  const IceCreamAnimation({
-    Key key,
-    @required this.controller,
-    @required this.screenSize
-
-  })  :
-        super(key: key);
+  const IceCreamAnimation(
+      {Key key, @required this.controller, @required this.screenSize})
+      : super(key: key);
 
   final Animation<double> controller;
   final Size screenSize;
-
 
   @override
   _IceCreamAnimationState createState() => _IceCreamAnimationState();
 }
 
 class _IceCreamAnimationState extends State<IceCreamAnimation> {
-
   GlobalKey _keyCone, _keyDipping, _keyTopping, _keyIce;
   double _coneHeight, _dippingWidth, _toppingHeight, _iceWidth;
   Size _screenSize;
-
 
   Animation<double> _controller;
   Animation<double> _dippingSlideLeftAnimation;
@@ -328,13 +338,8 @@ class _IceCreamAnimationState extends State<IceCreamAnimation> {
   Animation<double> _toppingSlideDownAnimation;
   Animation<double> _coneSlideUpAnimation;
 
-
-
-
-
-
   final double _scale = 0.8;
-  double _scaleFactor ;
+  double _scaleFactor;
 
   @override
   void initState() {
@@ -345,9 +350,9 @@ class _IceCreamAnimationState extends State<IceCreamAnimation> {
     _keyIce = GlobalKey();
 
     _dippingWidth = 0.0;
-    _iceWidth =0.0;
-    _coneHeight =0.0;
-    _toppingHeight =0.0;
+    _iceWidth = 0.0;
+    _coneHeight = 0.0;
+    _toppingHeight = 0.0;
     _scaleFactor = 2 - _scale;
 
     _controller = widget.controller;
@@ -355,27 +360,42 @@ class _IceCreamAnimationState extends State<IceCreamAnimation> {
 
     SchedulerBinding.instance.addPostFrameCallback(_calculateDimensions);
 
-    _dippingSlideLeftAnimation = Tween(begin: ((_screenSize.width / 2)+(_dippingWidth/4)), end: 0.0)
-        .animate(CurvedAnimation(
-        parent: _controller,
-        curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
-    _iceSlideRightAnimation = Tween(begin: (-(_screenSize.width / 2)-(_iceWidth/4)), end: 0.0)
-        .animate(CurvedAnimation(
-        parent: _controller,
-        curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
-    _toppingSlideDownAnimation =Tween(begin: - _screenSize.height/2.0 , end: -150.0 * _scaleFactor).animate(
-        CurvedAnimation(
-            parent: _controller,
-            curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
-    _coneSlideUpAnimation = Tween(begin: (_coneHeight/4), end: 100.0*_scaleFactor)
-        .animate(CurvedAnimation(
-        parent: _controller,
-        curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
+    _dippingSlideLeftAnimation =
+        Tween(begin: ((_screenSize.width / 2) + (_dippingWidth / 4)), end: 0.0)
+            .animate(CurvedAnimation(
+                parent: _controller,
+                curve: Interval(0.8, 0.9, curve: Curves.bounceOut))
+              ..addListener(() {
+                setState(() {});
+              }));
+    _iceSlideRightAnimation =
+        Tween(begin: (-(_screenSize.width / 2) - (_iceWidth / 4)), end: 0.0)
+            .animate(CurvedAnimation(
+                parent: _controller,
+                curve: Interval(0.8, 0.9, curve: Curves.bounceOut)))
+              ..addListener(() {
+                setState(() {});
+              });
+    _toppingSlideDownAnimation =
+        Tween(begin: -_screenSize.height / 2.0, end: -150.0 * _scaleFactor)
+            .animate(CurvedAnimation(
+                parent: _controller,
+                curve: Interval(0.8, 0.9, curve: Curves.bounceOut)))
+              ..addListener(() {
+                setState(() {});
+              });
+    _coneSlideUpAnimation =
+        Tween(begin: (_coneHeight / 4), end: 100.0 * _scaleFactor).animate(
+            CurvedAnimation(
+                parent: _controller,
+                curve: Interval(0.8, 0.9, curve: Curves.bounceOut)))
+          ..addListener(() {
+            setState(() {});
+          });
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Transform.scale(
       scale: _scale,
       child: Center(
@@ -385,61 +405,79 @@ class _IceCreamAnimationState extends State<IceCreamAnimation> {
           //alignment: FractionalOffset.center,
           children: <Widget>[
             Transform.translate(
-                offset: Offset(0.0 , _coneSlideUpAnimation.value * _scaleFactor),
-                child: Align(key: _keyCone,alignment: FractionalOffset.center,child: AssetsProvider.of(context).cone)),
+                offset: Offset(0.0, _coneSlideUpAnimation.value * _scaleFactor),
+                child: Align(
+                    key: _keyCone,
+                    alignment: FractionalOffset.center,
+                    child: AssetsProvider.of(context).cone)),
             Transform.translate(
-                offset: Offset( _iceSlideRightAnimation.value * _scaleFactor, -150.0),
+                offset: Offset(
+                    _iceSlideRightAnimation.value * _scaleFactor, -150.0),
                 child: Container(
                     key: _keyIce,
-                    child: Center(
-
-                        child: AssetsProvider.of(context).ice))),
+                    child: Center(child: AssetsProvider.of(context).ice))),
             Transform.translate(
-                offset: Offset(_dippingSlideLeftAnimation.value * _scaleFactor, -190.0),
+                offset: Offset(
+                    _dippingSlideLeftAnimation.value * _scaleFactor, -190.0),
                 child: Container(
                     key: _keyDipping,
                     child: Center(child: AssetsProvider.of(context).dipping))),
             Transform.translate(
-                offset: Offset( 0.0,  _toppingSlideDownAnimation.value * _scaleFactor),
+                offset: Offset(
+                    0.0, _toppingSlideDownAnimation.value * _scaleFactor),
                 child: Container(
                   key: _keyTopping,
-                  child: Center(child: Image.asset('assets/toping.png',fit: BoxFit.cover,)),
-                ))//AssetsProvider.of(context).topping))),
+                  child: Center(
+                      child: Image.asset(
+                    'assets/toping.png',
+                    fit: BoxFit.cover,
+                  )),
+                )) //AssetsProvider.of(context).topping))),
           ],
         ),
       ),
     );
   }
+
   void _calculateDimensions(_) {
     final RenderBox renderBoxCone = _keyCone.currentContext.findRenderObject();
     final RenderBox renderBoxIce = _keyIce.currentContext.findRenderObject();
-    final RenderBox renderBoxDipping = _keyDipping.currentContext.findRenderObject();
-    final RenderBox renderBoxTopping = _keyTopping.currentContext.findRenderObject();
+    final RenderBox renderBoxDipping =
+        _keyDipping.currentContext.findRenderObject();
+    final RenderBox renderBoxTopping =
+        _keyTopping.currentContext.findRenderObject();
     setState(() {
       _coneHeight = renderBoxCone.size.height;
       _toppingHeight = renderBoxTopping.size.height;
       _dippingWidth = renderBoxDipping.size.width;
       _iceWidth = renderBoxIce.size.width;
 
-      print("Cone Height = ${renderBoxCone.size.height}, Toping Height = $_toppingHeight ,Ice Width = $_iceWidth ,dipping Width = $_dippingWidth");
+      print(
+          "Cone Height = ${renderBoxCone.size.height}, Toping Height = $_toppingHeight ,Ice Width = $_iceWidth ,dipping Width = $_dippingWidth");
 
-      _coneSlideUpAnimation = Tween(begin: (_screenSize.height / 2 + _coneHeight/4), end: 100.0* _scale)
+      _coneSlideUpAnimation = Tween(
+              begin: (_screenSize.height / 2 + _coneHeight / 4),
+              end: 100.0 * _scale)
           .animate(CurvedAnimation(
-          parent: _controller,
-          curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
-
-      _dippingSlideLeftAnimation = Tween(begin: (_screenSize.width / 2.0)+(_dippingWidth/4.0), end: 0.0)
-          .animate(CurvedAnimation(
-          parent: _controller,
-          curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
-      _iceSlideRightAnimation = Tween(begin: -(_screenSize.width / 2.0)-(_iceWidth/4), end: 0.0)
-          .animate(CurvedAnimation(
-          parent: _controller,
-          curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
-      _toppingSlideDownAnimation =Tween(begin: - (_screenSize.height/2.0 )-50.0, end: -150.0*_scale).animate(
-          CurvedAnimation(
               parent: _controller,
               curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
+
+      _dippingSlideLeftAnimation = Tween(
+              begin: (_screenSize.width / 2.0) + (_dippingWidth / 4.0),
+              end: 0.0)
+          .animate(CurvedAnimation(
+              parent: _controller,
+              curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
+      _iceSlideRightAnimation =
+          Tween(begin: -(_screenSize.width / 2.0) - (_iceWidth / 4), end: 0.0)
+              .animate(CurvedAnimation(
+                  parent: _controller,
+                  curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
+      _toppingSlideDownAnimation =
+          Tween(begin: -(_screenSize.height / 2.0) - 50.0, end: -150.0 * _scale)
+              .animate(CurvedAnimation(
+                  parent: _controller,
+                  curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
     });
   }
 }
