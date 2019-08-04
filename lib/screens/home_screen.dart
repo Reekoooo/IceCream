@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_ice_cream/assets/assets_provider.dart';
@@ -30,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     screenSize = MediaQuery.of(context).size;
-    print(screenSize.height);
+
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -69,7 +70,7 @@ class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
   Animation<double> _flareSlideLeftAnimation;
 
   AnimationController _menuLeavingController;
-  AnimationController _animationController;
+  AnimationController _incremintalRotationAnimationController;
   Animation<double> _rotationAnimation;
   double _currentRotation = 0.0;
   bool _isButtonVisible = true;
@@ -85,10 +86,8 @@ class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
     super.initState();
 
 
-    _animationController = AnimationController(vsync: this,duration: Duration(milliseconds: 200))..addListener((){
-      print(_animationController.value);
+    _incremintalRotationAnimationController = AnimationController(vsync: this,duration: Duration(milliseconds: 200))..addListener((){
       if (_currentRotation == -0.75) {
-        print("1 Rotation finished");
         _isButtonVisible = false;
         _menuLeavingController.forward();
       }
@@ -98,21 +97,16 @@ class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
     _menuLeavingController =
         AnimationController(vsync: this, duration: Duration(seconds: 5))
           ..addListener(() {
-            print(_menuLeavingController.value);
-//            setState(() {});
           });
-
-    //controller = _menuLeavingController;
 
     _incrementalRotationAnimation =Tween<double>(begin: _currentRotation,end: _currentRotation+_incrementalRotation).animate(
 
-    CurvedAnimation(parent: _animationController, curve: Curves.decelerate));
+    CurvedAnimation(parent: _incremintalRotationAnimationController, curve: Curves.decelerate));
 
     _rotationAnimation =
         Tween<double>(begin: 3.14 / 4, end: 3.14 * 8 + 3.14 / 4).animate(
       CurvedAnimation(
-          parent: _menuLeavingController, curve: Interval(0.4, 0.6, curve: Curves.linear))
-        ..addListener(() {}),
+          parent: _menuLeavingController, curve: Interval(0.4, 0.6, curve: Curves.linear)),
     );
 
 
@@ -166,7 +160,7 @@ class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _incremintalRotationAnimationController.dispose();
     _menuLeavingController.dispose();
     super.dispose();
   }
@@ -202,7 +196,7 @@ class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
           opacity: _textOpacityAnimation.value,
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.only(left: 16.0),
+              padding: const EdgeInsets.only(left: 16.0,top: 260.0),
               child: Text(
                 "You are Awesome ..! ",
                 style: TextStyle(fontSize: 50, color: Colors.white54),
@@ -255,7 +249,7 @@ class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
     setState(() {
       _incrementalRotationAnimation =
           Tween(begin: _currentRotation, end: _endRotation).animate(
-        CurvedAnimation(parent: _animationController, curve: Curves.decelerate)
+        CurvedAnimation(parent: _incremintalRotationAnimationController, curve: Curves.decelerate)
           ..addListener(() {
             setState(() {});
           }),
@@ -263,8 +257,7 @@ class _MenuWheelState extends State<MenuWheel> with TickerProviderStateMixin {
     });
 
     _currentRotation = _endRotation;
-    print(_currentRotation);
-    _animationController.forward(from: 0.0);
+    _incremintalRotationAnimationController.forward(from: 0.0);
   }
 }
 
@@ -317,8 +310,7 @@ class _FlareAnimationState extends State<FlareAnimation> {
 }
 
 class IceCreamAnimation extends StatefulWidget {
-  const IceCreamAnimation(
-      {Key key, @required this.controller, @required this.screenSize})
+  const IceCreamAnimation({Key key, @required this.controller, @required this.screenSize})
       : super(key: key);
 
   final Animation<double> controller;
@@ -329,11 +321,13 @@ class IceCreamAnimation extends StatefulWidget {
 }
 
 class _IceCreamAnimationState extends State<IceCreamAnimation> {
+
   GlobalKey _keyCone, _keyDipping, _keyTopping, _keyIce;
   double _coneHeight, _dippingWidth, _toppingHeight, _iceWidth;
   Size _screenSize;
 
   Animation<double> _controller;
+  Animation<double> _opacityAnimation;
   Animation<double> _dippingSlideLeftAnimation;
   Animation<double> _iceSlideRightAnimation;
   Animation<double> _toppingSlideDownAnimation;
@@ -345,142 +339,130 @@ class _IceCreamAnimationState extends State<IceCreamAnimation> {
   @override
   void initState() {
     super.initState();
+
     _keyCone = GlobalKey();
     _keyDipping = GlobalKey();
     _keyTopping = GlobalKey();
     _keyIce = GlobalKey();
-
     _dippingWidth = 0.0;
     _iceWidth = 0.0;
     _coneHeight = 0.0;
     _toppingHeight = 0.0;
     _scaleFactor = 2 - _scale;
-
     _controller = widget.controller;
     _screenSize = widget.screenSize;
 
-    SchedulerBinding.instance.addPostFrameCallback(_calculateDimensions);
+    _buildAnimations();
 
-    _dippingSlideLeftAnimation =
-        Tween(begin: ((_screenSize.width / 2) + (_dippingWidth / 4)), end: 0.0)
-            .animate(CurvedAnimation(
-                parent: _controller,
-                curve: Interval(0.8, 0.9, curve: Curves.bounceOut))
-              ..addListener(() {
-                setState(() {});
-              }));
-    _iceSlideRightAnimation =
-        Tween(begin: (-(_screenSize.width / 2) - (_iceWidth / 4)), end: 0.0)
-            .animate(CurvedAnimation(
-                parent: _controller,
-                curve: Interval(0.8, 0.9, curve: Curves.bounceOut)))
-              ..addListener(() {
-                setState(() {});
-              });
-    _toppingSlideDownAnimation =
-        Tween(begin: -_screenSize.height / 2.0, end: -150.0 * _scaleFactor)
-            .animate(CurvedAnimation(
-                parent: _controller,
-                curve: Interval(0.8, 0.9, curve: Curves.bounceOut)))
-              ..addListener(() {
-                setState(() {});
-              });
-    _coneSlideUpAnimation =
-        Tween(begin: (_coneHeight / 4), end: 100.0 * _scaleFactor).animate(
-            CurvedAnimation(
-                parent: _controller,
-                curve: Interval(0.8, 0.9, curve: Curves.bounceOut)))
-          ..addListener(() {
-            setState(() {});
-          });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Transform.scale(
-      scale: _scale,
-      child: Center(
-        child: Stack(
-          fit: StackFit.loose,
-          //overflow: Overflow.visible,
-          //alignment: FractionalOffset.center,
-          children: <Widget>[
-            Transform.translate(
-                offset: Offset(0.0, _coneSlideUpAnimation.value * _scaleFactor),
-                child: Align(
-                    key: _keyCone,
-                    alignment: FractionalOffset.center,
-                    child: AssetsProvider.of(context).cone)),
-            Transform.translate(
-                offset: Offset(
-                    _iceSlideRightAnimation.value * _scaleFactor, -150.0),
-                child: Container(
-                    key: _keyIce,
-                    child: Center(child: AssetsProvider.of(context).ice))),
-            Transform.translate(
-                offset: Offset(
-                    _dippingSlideLeftAnimation.value * _scaleFactor, -190.0),
-                child: Container(
-                    key: _keyDipping,
-                    child: Center(child: AssetsProvider.of(context).dipping))),
-            Transform.translate(
-                offset: Offset(
-                    0.0, _toppingSlideDownAnimation.value * _scaleFactor),
-                child: Container(
-                  key: _keyTopping,
+
+    return Opacity(
+      opacity: _opacityAnimation.value,
+      child: Transform.scale(
+        scale: _scale,
+        child: Center(
+          child: Stack(
+            children: <Widget>[
+              Transform.translate(
+                  offset: Offset(0.0, _coneSlideUpAnimation.value * _scaleFactor),
                   child: Center(
-                      child: Image.asset(
-                    'assets/toping.png',
-                    fit: BoxFit.cover,
+                      child: Container(
+                        key: _keyCone,
+                        child: AssetsProvider.of(context).getAsset('cone',callback:  _calculateDimensions)
+
+                      ),
+                  ),
+              ),
+              Transform.translate(
+                  offset: Offset( _iceSlideRightAnimation.value * _scaleFactor, -150.0),
+                  child: Center(
+                    child: Container(
+                        key: _keyIce,
+                        child: AssetsProvider.of(context).getAsset('ice',)),
                   )),
-                )) //AssetsProvider.of(context).topping))),
-          ],
+              Transform.translate(
+                  offset: Offset( _dippingSlideLeftAnimation.value * _scaleFactor, -190.0),
+                  child: Center(
+                    child: Container(
+                        key: _keyDipping,
+                        child:  AssetsProvider.of(context).getAsset('dipping',)),
+                  )),
+              Transform.translate(
+                  offset: Offset(0.0, _toppingSlideDownAnimation.value * _scaleFactor),
+                  child: Center(
+                    child: Container(
+                      key: _keyTopping,
+                      child: AssetsProvider.of(context).getAsset('topping',),
+                    ),
+                  )) //AssetsProvider.of(context).topping))),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  void _calculateDimensions(_) {
+
+  FutureOr<dynamic> _calculateDimensions (){
     final RenderBox renderBoxCone = _keyCone.currentContext.findRenderObject();
+    final RenderBox renderBoxTopping = _keyTopping.currentContext.findRenderObject();
     final RenderBox renderBoxIce = _keyIce.currentContext.findRenderObject();
-    final RenderBox renderBoxDipping =
-        _keyDipping.currentContext.findRenderObject();
-    final RenderBox renderBoxTopping =
-        _keyTopping.currentContext.findRenderObject();
-    setState(() {
-      _coneHeight = renderBoxCone.size.height;
-      _toppingHeight = renderBoxTopping.size.height;
-      _dippingWidth = renderBoxDipping.size.width;
-      _iceWidth = renderBoxIce.size.width;
+    final RenderBox renderBoxDipping = _keyDipping.currentContext.findRenderObject();
+    _coneHeight = renderBoxCone.size.height;
+    _toppingHeight = renderBoxTopping.size.height;
+    _dippingWidth = renderBoxDipping.size.width;
+    _iceWidth = renderBoxIce.size.width;
 
-      print(
-          "Cone Height = ${renderBoxCone.size.height}, Toping Height = $_toppingHeight ,Ice Width = $_iceWidth ,dipping Width = $_dippingWidth");
+    print('''
+    Cone height = $_coneHeight 
+    Topping height = $_toppingHeight
+    Dipping width =  $_dippingWidth
+    Ice width =  $_iceWidth
+    
+    ''');
 
-      _coneSlideUpAnimation = Tween(
-              begin: (_screenSize.height / 2 + _coneHeight / 4),
-              end: 100.0 * _scale)
-          .animate(CurvedAnimation(
-              parent: _controller,
-              curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
 
-      _dippingSlideLeftAnimation = Tween(
-              begin: (_screenSize.width / 2.0) + (_dippingWidth / 4.0),
-              end: 0.0)
-          .animate(CurvedAnimation(
-              parent: _controller,
-              curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
-      _iceSlideRightAnimation =
-          Tween(begin: -(_screenSize.width / 2.0) - (_iceWidth / 4), end: 0.0)
-              .animate(CurvedAnimation(
-                  parent: _controller,
-                  curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
-      _toppingSlideDownAnimation =
-          Tween(begin: -(_screenSize.height / 2.0) - 50.0, end: -150.0 * _scale)
-              .animate(CurvedAnimation(
-                  parent: _controller,
-                  curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
-    });
+    _buildAnimations();
+
   }
+
+  void _buildAnimations() {
+    _opacityAnimation = Tween(begin: 0.0,end: 1.0).animate(CurvedAnimation(parent: _controller, curve:
+    Interval(0.75, 0.79 ,curve: Curves.linear)))
+      ..addListener((){
+        setState(() {
+
+        });
+      });
+
+    _coneSlideUpAnimation =
+        Tween(begin: (_screenSize.height / 2 + _coneHeight/ 4 ),
+        end: 100.0 * _scale)
+        .animate(CurvedAnimation(
+        parent: _controller,
+        curve: Interval(0.8 , 0.9 , curve: Curves.bounceOut)));
+
+    _dippingSlideLeftAnimation =
+        Tween( begin: (_screenSize.width / 2.0) + (_dippingWidth / 4.0),end: 0.0)
+        .animate(CurvedAnimation(
+            parent: _controller,
+            curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
+    _iceSlideRightAnimation =
+        Tween(begin: -(_screenSize.width / 2.0) - (_iceWidth / 4), end: 0.0)
+            .animate(CurvedAnimation(
+            parent: _controller,
+            curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
+    _toppingSlideDownAnimation =
+        Tween(begin: -(_screenSize.height / 2.0) -(_toppingHeight/4), end: -170.0 * _scale)
+            .animate(CurvedAnimation(
+            parent: _controller,
+            curve: Interval(0.8, 0.9, curve: Curves.bounceOut)));
+  }
+
+
 }
 
 class DrawCircle extends CustomPainter {
